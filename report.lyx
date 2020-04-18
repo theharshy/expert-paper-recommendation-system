@@ -1,0 +1,482 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass IEEEtran-CompSoc
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Automatic Paper-Reviewer Assignment System
+\end_layout
+
+\begin_layout Author
+Akshat Choube, Adrian McDonald Tariang, Harsh Yadav
+\end_layout
+
+\begin_layout Section
+Introduction:
+\end_layout
+
+\begin_layout Standard
+In a medium-to-large scale conference, there are thousands of research papers
+ submitted, with only a limited number of reviewers for these papers in
+ this regard.
+ One of the problems that needs attention in such research conferences is
+ that of assigning any submitted paper to be reviewed by an expert on the
+ basis of their expertise in the field of which the paper belongs.
+ It is manually nearly impossible to go through each paper and find a suitable
+ expert in the field to review it, considering we will be needing not only
+ the category the paper belongs to but also the expertise field of the expert
+ based on the papers they have written in the past.
+ This is where automation comes into play and the need for an automatic
+ paper-reviewer assignment system becomes imperative.
+ 
+\end_layout
+
+\begin_layout Standard
+In this paper we have tried to tackle this problem with efficiency and accuracy
+ in mind.
+ We put forth two algorithms for the same.
+ The first algorithm assigns the experts who have a paper in closest distance
+ to this paper.
+ The second algorithm is a hybrid of content-based filtering and collaborative
+ filtering.
+ We cluster all the papers (including those of the experts) and for each
+ cluster, for each expert we calculate an overall rating which describes
+ the expert’s expertise in that cluster.
+ And then the semi-supervised clustering algorithm assigns papers that we
+ have to recommend to the experts which have high expertise in that cluster.
+ The idea behind choosing 
+\emph on
+k 
+\emph default
+would be number of different fields for which a given conference is inviting
+ papers.
+\end_layout
+
+\begin_layout Section
+Algorithm
+\end_layout
+
+\begin_layout Standard
+A machine learning problem has three major parts: 1.
+ Pre-processing 2.
+ Algorithm 3.
+ Testing.
+\end_layout
+
+\begin_layout Subsection
+Pre-processing : 
+\end_layout
+
+\begin_layout Standard
+The data-set used by us is 
+\end_layout
+
+\begin_layout Standard
+http://turing.iitpkd.ac.in/moodle/pluginfile.php/5883/
+\end_layout
+
+\begin_layout Standard
+mod_assign/intro/evaluation.tar 
+\end_layout
+
+\begin_layout Standard
+The give data-set had information about reviewers and papers to be reviewed.
+ We have three major entities: 
+\end_layout
+
+\begin_layout Itemize
+Expert 
+\end_layout
+
+\begin_layout Itemize
+Paper 
+\end_layout
+
+\begin_layout Itemize
+ExpertSystem
+\end_layout
+
+\begin_layout Standard
+The UML diagram depicts the attribute of the entities
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename uml.png
+	scale 18
+
+\end_inset
+
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+UML Diagram for our system
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We extract our entities from raw data in data-set.
+ As our data-set contains some non-UTF8 characters, we need to remove them
+ in our pre-processing phase.
+ We assign unique ID to each paper.
+ We use sklearn built-in function to generate TF-IDF matrix for all papers
+ using our custom tokenizer which removes stop-words and does the necessary
+ stemming.After getting the TF-IDF matrix, we generate similarity matrix
+ using cosine similarity between papers.
+\end_layout
+
+\begin_layout Subsection
+Algorithm:
+\end_layout
+
+\begin_layout Subsubsection
+Algorithm1
+\end_layout
+
+\begin_layout Paragraph*
+
+\series bold
+Assumption and Motivation
+\end_layout
+
+\begin_layout Standard
+The algorithm described under takes the assumption that an expert who has
+ written a paper with keywords matching the most with the paper under review
+ will have more knowledge of the field and consequently will be most eligible
+ to review it.
+\end_layout
+
+\begin_layout Paragraph*
+Algorithm
+\end_layout
+
+\begin_layout Enumerate
+For each paper in research_papers (papers which need recommendation):
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Go to 
+\begin_inset Formula $i^{th}$
+\end_inset
+
+ row of similarity matrix where i is unique index of paper.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Do argsort() of 
+\begin_inset Formula $i^{th}$
+\end_inset
+
+ row in descending order (this returns unique index of papers which are
+ closest to the given paper) 
+\end_layout
+
+\begin_layout Enumerate
+Choose expert_per_paper number which are written by experts from top (this
+ returns top expert_per_paper number closest to given paper) 
+\end_layout
+
+\begin_layout Standard
+Recommend given paper to the authors of the papers returned in step (c).
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Algorithm2
+\end_layout
+
+\begin_layout Paragraph*
+
+\series bold
+Assumption and Motivation
+\end_layout
+
+\begin_layout Standard
+The second algorithm assumes that we have the knowledge of the number of
+ categories under which the papers belong (for eg.
+ Machine Learning, Psychology, Biotechnology) and thus assign each paper
+ to one of these clusters.
+ Finally we assign a new paper that belongs to this category to the expert
+ who has most expertise in this field.
+ 
+\end_layout
+
+\begin_layout Paragraph*
+
+\series bold
+Algorithm
+\end_layout
+
+\begin_layout Enumerate
+Cluster all papers into k-clusters using TF-IDF matrix and get labels for
+ each paper.
+ 
+\end_layout
+
+\begin_layout Enumerate
+For each cluster : 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+For each expert : 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+For each paper in cluster : 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Ranking[cluster][expert] = Ranking[cluster][expert] + maximum similarity
+ (paper, paper*) where paper* are papers written by given expert 
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Enumerate
+For each paper in research_paper (papers which need recommendation) 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Get cluster to which the paper belongs as paper_cluster 
+\end_layout
+
+\begin_layout Enumerate
+Recommend top expert_per_paper number of experts in the cluster using ranking
+ matrix obtained in previous step.
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Subsection
+Testing 
+\end_layout
+
+\begin_layout Standard
+We did testing on Evaluation kit provided and got precision as follows:
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Algorithm 1 : 
+\series default
+0.046
+\end_layout
+
+\begin_layout Enumerate
+
+\series bold
+Algorithm 2
+\series default
+ 
+\series bold
+:
+\series default
+ 0.066
+\end_layout
+
+\begin_layout Standard
+Our Second Algorithm requires number of clusters here is graph of precision
+ vs k.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename /home/akshat/kk.png
+	scale 30
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Paradigm and Data Structures :
+\end_layout
+
+\begin_layout Standard
+We took an Object Oriented Approach to this problem.
+ We made basically three major entities namely Paper, Expert and Expert
+ System.
+ Python as a language provides us with a multi-paradigm option.
+ Some part of our code had pattern matching and high order function such
+ as map and filter.
+\end_layout
+
+\begin_layout Paragraph*
+
+\series medium
+Data Structures used by us are lists and dictionaries.
+ In addition we used a 2 dimensional Dictionary to keep score of experts
+ along with name.
+\end_layout
+
+\begin_layout Section
+Improvements and Further Work:
+\end_layout
+
+\begin_layout Standard
+The main idea of our Second Algorithm is correct.
+ Henceforth, we could try to improve efficiency of our algorithm and try
+ to achieve high precision.
+ At the onset, it is believed that finding the optimal 'k' should increase
+ precision.
+ We would like to try more algorithms like K nearest neighbors of paper,
+ Clustering and taking mean distance etc.
+\end_layout
+
+\begin_layout Section
+Contribution:
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Akshat Choube: 
+\series default
+The majority of research and finding the efficient algorithm and maximizing
+ accuracy was done by Akshat Choube.
+ In the initial stages, he introduced the concept of Collaborative filtering
+ and Content-Based filtering to the group around which the rest of the project
+ was centered.
+ Furthermore, the data-preprocessing such as removing the non-UTF8 characters
+ from the files was done by him.
+ As a result, the second algorithm was designed and implemented to completion
+ by Akshat Choube.
+ 
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Adrian McDonald Tariang: 
+\series default
+Another group member involved in researching and coming up with data clustering
+ based on the TF-IDF matrix was Adrian McDonald Tariang.
+ The credit of computing the similarity matrix among papers based on their
+ TF-IDF vectors which was eventually used by both the algorithms goes to
+ him.
+ Besides the research and programming, Adrian was an active member to optimize
+ the code and cleaning it up if and when required.
+ In a long run, this technique was pretty helpful as it helped debugging
+ easier.
+ 
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Harsh Yadav : 
+\series default
+The design and implementation of the Algorithm1 was an effort of Harsh Yadav.
+ He came up with the idea of avoiding clustering and directly assigning
+ the expert based on the score in similarity matrix.
+ This approach proved to be a faster implementation than Algorithm2, although
+ didn't consider the maximum information from the dataset.
+ Moreover, he was an active member to debug the code, debugging not only
+ Algorithm1 but also Algorithm2 wherever bugs were similar.
+\end_layout
+
+\end_body
+\end_document
